@@ -2,13 +2,12 @@ from flask import Flask, request, redirect
 
 app = Flask(__name__)
 
-
-nextid = 4
 topics = [
     {'id':1, 'title': 'html', 'body': 'html is ...'},
     {'id':2, 'title': 'css', 'body': 'css is ...'},
     {'id':3, 'title': 'javascript', 'body': 'javascript is ...'}
 ]
+nextid = max([topic['id'] for topic in topics]) + 1 
 
 def template(contents, content):
     return f'''<!doctype html>
@@ -65,6 +64,7 @@ def create():
         newtopic = {'id':nextid, 'title':title, 'body':body}
         topics.append(newtopic)
         url = '/read/' + str(nextid)
+        print(url)
         nextid += 1 
         return redirect(url)
 
