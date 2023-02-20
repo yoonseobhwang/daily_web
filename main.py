@@ -9,7 +9,13 @@ topics = [
 ]
 nextid = max([topic['id'] for topic in topics]) + 1 
 
-def template(contents, content):
+def template(contents, content, id=None):
+    contextUI = ''
+    if id:
+        contextUI = f'''
+        <li><a href="/update/{id}/">update</a></li>
+        <li><form action="/delete/{id}" method="POST"><input type="submit" value="delete"></form></li>
+        '''
     return f'''<!doctype html>
     <html>
         <body>
@@ -20,6 +26,7 @@ def template(contents, content):
                 {content}
             <ul>
                 <li><a href="/create/">create</a></li>
+                {contextUI}
         </body>
     </html>
     '''
@@ -39,15 +46,14 @@ def home():
 def read(id):
     for topic in topics:
         if id == topic['id']:
-            title, body = topic['body'], topic['body']
+            title, body = topic['title'], topic['body']
             break
     
-    return template(get_Contents(), f'<h2>{title}</h2>{body}')
+    return template(get_Contents(), f'<h2>{title}</h2>{body}', id)
 
 @app.route('/create/', methods=['GET', 'POST'])
 def create():
     req = request.method
-    print(req)
     if req == 'GET':    
         content = '''
             <form action="/create/" method="POST">
@@ -67,6 +73,45 @@ def create():
         print(url)
         nextid += 1 
         return redirect(url)
+    
+    
+@app.route('/update/<int:id>/', methods=['GET','POST']) 
+def update(id):
+    req = request.method
+
+    if req == 'GET':
+        for topic in topics:
+            if id == topic['id']:
+                title, body = topic['title'], topic['body']
+                break    
+        content = f'''
+            <form action="/update/{id}/" method="POST">
+                <p><input type="text" name='name' placeholder="title", value="{title}"></p>
+                <p><textarea name='body' placeholder="body">{body}</textarea></p>
+                <p><input type="submit" value="update"></p>
+        '''
+        return template(get_Contents(), content)
+
+    else:
+        title = request.form['name']
+        body = request.form['body']
+        newtopic = {'id':id, 'title':title, 'body':body}
+        for idx, topic in enumerate(topics):
+            if topic['id'] == id:
+                topics[idx] = newtopic
+                break
+
+        url = '/read/' + str(id)
+        return redirect(url)
+
+@app.route('/delete/<int:id>/', methods=['POST'])
+def delete(id):
+    for topic in topics:
+        if topic['id'] == id:
+            topics.remove(topic)
+            break
+
+    return redirect('/')
 
 if __name__ == "__main__":
     app.run(debug=True)
